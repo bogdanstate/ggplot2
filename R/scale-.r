@@ -206,10 +206,9 @@ ScaleContinuous <- ggproto("ScaleContinuous", Scale,
 
   get_breaks = function(self, limits = self$get_limits()) {
     if (self$is_empty()) return(numeric())
-
     # Limits in transformed space need to be converted back to data space
     limits <- self$trans$inverse(limits)
-
+    
     if (is.null(self$breaks)) {
       return(NULL)
     } else if (identical(self$breaks, NA)) {
@@ -285,7 +284,13 @@ ScaleContinuous <- ggproto("ScaleContinuous", Scale,
     } else if (is.waive(self$labels)) {
       labels <- self$trans$format(breaks)
     } else if (is.function(self$labels)) {
+      # Client may supply a formatting function that returns another function,
+      # which uses context provided by the breaks themselves, which honor the
+      # input data format.
       labels <- self$labels(breaks)
+      if (is.function(labels)) {
+        labels <- labels(breaks)
+      }
     } else {
       labels <- self$labels
     }
